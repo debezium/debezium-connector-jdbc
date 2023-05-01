@@ -5,6 +5,8 @@
  */
 package io.debezium.connector.jdbc.dialect.mysql;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -12,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.StatelessSession;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.MySQLDialect;
 
@@ -150,6 +153,26 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
             }
         }
         super.addColumnDefaultValue(field, columnSpec);
+    }
+
+    @Override
+    protected String getSchemaName(SessionFactory sessionFactory) {
+        final StatelessSession session = sessionFactory.openStatelessSession();
+        try {
+            return session.doReturningWork((connection) -> {
+                try (PreparedStatement ps = connection.prepareStatement("SELECT database()")) {
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            return rs.getString(1);
+                        }
+                        return null;
+                    }
+                }
+            });
+        }
+        finally {
+            session.close();
+        }
     }
 
 }

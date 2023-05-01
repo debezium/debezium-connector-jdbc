@@ -86,6 +86,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
     private final IdentifierHelper identifierHelper;
     private final ColumnNamingStrategy columnNamingStrategy;
     private final Map<String, Type> typeRegistry = new HashMap<>();
+    private final String schemaName;
 
     public GeneralDatabaseDialect(JdbcSinkConnectorConfig config, SessionFactory sessionFactory) {
         this.connectorConfig = config;
@@ -93,6 +94,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
         this.ddlTypeRegistry = unwrapSessionFactory(sessionFactory).getTypeConfiguration().getDdlTypeRegistry();
         this.identifierHelper = unwrapSessionFactory(sessionFactory).getJdbcServices().getJdbcEnvironment().getIdentifierHelper();
         this.columnNamingStrategy = connectorConfig.getColumnNamingStrategy();
+        this.schemaName = getSchemaName(sessionFactory);
 
         registerTypes();
     }
@@ -102,7 +104,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
         if (isIdentifierUppercaseWhenNotQuoted() && !getConfig().isQuoteIdentifiers()) {
             tableName = Strings.isNullOrBlank(tableName) ? tableName : tableName.toUpperCase();
         }
-        try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, null)) {
+        try (ResultSet rs = connection.getMetaData().getTables(null, schemaName, tableName, null)) {
             return rs.next();
         }
     }
@@ -113,7 +115,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
             tableName = Strings.isNullOrBlank(tableName) ? tableName : tableName.toUpperCase();
         }
         final TableDescriptor.Builder table = TableDescriptor.builder();
-        try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, null)) {
+        try (ResultSet rs = connection.getMetaData().getTables(null, schemaName, tableName, null)) {
             if (rs.next()) {
                 table.catalogName(rs.getString(1));
                 table.schemaName(rs.getString(2));
@@ -128,7 +130,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
         }
 
         final List<String> primaryKeyColumNames = new ArrayList<>();
-        try (ResultSet rs = connection.getMetaData().getPrimaryKeys(null, null, tableName)) {
+        try (ResultSet rs = connection.getMetaData().getPrimaryKeys(null, schemaName, tableName)) {
             while (rs.next()) {
                 final String columnName = rs.getString(4);
                 primaryKeyColumNames.add(columnName);
@@ -136,7 +138,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
             }
         }
 
-        try (ResultSet rs = connection.getMetaData().getColumns(null, null, tableName, null)) {
+        try (ResultSet rs = connection.getMetaData().getColumns(null, schemaName, tableName, null)) {
             final int resultSizeColumnSize = rs.getMetaData().getColumnCount();
             while (rs.next()) {
                 final String catalogName = rs.getString(1);
@@ -573,6 +575,10 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
 
     protected boolean isIdentifierUppercaseWhenNotQuoted() {
         return false;
+    }
+
+    protected String getSchemaName(SessionFactory sessionFactory) {
+        return null;
     }
 
     private String columnNameEqualsBinding(String fieldName, SinkRecordDescriptor record) {
