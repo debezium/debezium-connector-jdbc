@@ -37,4 +37,8 @@ class EnumType extends AbstractType {
         return ConnectStringType.INSTANCE.getTypeName(dialect, schema, key);
     }
 
+    @Override
+    public String getQueryBinding(Schema schema) {
+        return String.format("cast(? as %s)", schema.parameters().get("__debezium.source.column.type"));
+    }
 }

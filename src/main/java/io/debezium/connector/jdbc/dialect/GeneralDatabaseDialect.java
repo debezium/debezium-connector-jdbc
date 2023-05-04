@@ -43,21 +43,7 @@ import io.debezium.connector.jdbc.relational.ColumnDescriptor;
 import io.debezium.connector.jdbc.relational.TableDescriptor;
 import io.debezium.connector.jdbc.relational.TableId;
 import io.debezium.connector.jdbc.type.Type;
-import io.debezium.connector.jdbc.type.connect.AbstractConnectSchemaType;
-import io.debezium.connector.jdbc.type.connect.ConnectBooleanType;
-import io.debezium.connector.jdbc.type.connect.ConnectBytesType;
-import io.debezium.connector.jdbc.type.connect.ConnectDateType;
-import io.debezium.connector.jdbc.type.connect.ConnectDecimalType;
-import io.debezium.connector.jdbc.type.connect.ConnectFloat32Type;
-import io.debezium.connector.jdbc.type.connect.ConnectFloat64Type;
-import io.debezium.connector.jdbc.type.connect.ConnectInt16Type;
-import io.debezium.connector.jdbc.type.connect.ConnectInt32Type;
-import io.debezium.connector.jdbc.type.connect.ConnectInt64Type;
-import io.debezium.connector.jdbc.type.connect.ConnectInt8Type;
-import io.debezium.connector.jdbc.type.connect.ConnectMapToConnectStringType;
-import io.debezium.connector.jdbc.type.connect.ConnectStringType;
-import io.debezium.connector.jdbc.type.connect.ConnectTimeType;
-import io.debezium.connector.jdbc.type.connect.ConnectTimestampType;
+import io.debezium.connector.jdbc.type.connect.*;
 import io.debezium.connector.jdbc.type.debezium.DateType;
 import io.debezium.connector.jdbc.type.debezium.MicroTimeType;
 import io.debezium.connector.jdbc.type.debezium.MicroTimestampType;
@@ -492,6 +478,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
         registerType(ConnectTimestampType.INSTANCE);
         registerType(ConnectTimeType.INSTANCE);
         registerType(ConnectMapToConnectStringType.INSTANCE);
+        registerType(ConnectArrayType.INSTANCE);
     }
 
     protected void registerType(Type type) {

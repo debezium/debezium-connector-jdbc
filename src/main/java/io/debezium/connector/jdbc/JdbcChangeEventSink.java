@@ -68,7 +68,7 @@ public class JdbcChangeEventSink implements ChangeEventSink {
             write(table, descriptor);
         }
         catch (Exception e) {
-            throw new ConnectException("Failed to process a sink record", e);
+            LOGGER.error("Failed to process a sink record", e);
         }
     }
 
