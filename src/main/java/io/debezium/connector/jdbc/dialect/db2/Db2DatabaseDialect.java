@@ -63,7 +63,7 @@ public class Db2DatabaseDialect extends GeneralDatabaseDialect {
         super.registerTypes();
 
         registerType(BytesType.INSTANCE);
-        registerType(ZonedTimestampWithoutTimezoneType.INSTANCE);
+        registerType(Db2ZonedTimestampType.INSTANCE);
     }
 
     @Override

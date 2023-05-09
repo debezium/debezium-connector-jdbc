@@ -28,6 +28,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.junit.ComparisonFailure;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1669,7 +1670,9 @@ public abstract class AbstractJdbcSinkPipelineIT extends AbstractJdbcSinkIT {
                     "TO_TIMESTAMP('2022-12-31 14:15:16.456789', 'YYYY-MM-DD HH24:MI:SS.FF6')");
         }
         else {
-            values = List.of("'2023-03-01 01:02:03.123456'", "'2022-12-31 14:15:16.456789'");
+            // Without specifying the timezone details, some drivers fail to properly adjust time values when
+            // written to the database, particularly if the databases use non-UTC time zones.
+            values = List.of("'2023-03-01 01:02:03.123456+00:00'", "'2022-12-31 14:15:16.456789+00:00'");
         }
 
         final List<OffsetDateTime> expectedValues;
@@ -1726,9 +1729,11 @@ public abstract class AbstractJdbcSinkPipelineIT extends AbstractJdbcSinkIT {
     @WithTemporalPrecisionMode
     @SuppressWarnings("DataFlowIssue")
     public void testTimestampWithPrecisionDataType(Source source, Sink sink) throws Exception {
-        String value = "'2022-12-31 14:15:16.456789'";
+        // Without specifying the timezone details, some drivers fail to properly adjust time values when
+        // written to the database, particularly if the databases use non-UTC time zones.
+        String value = "'2022-12-31 14:15:16.456789+00:00'";
         if (SourceType.ORACLE.is(source.getType())) {
-            value = String.format("TO_TIMESTAMP(%s,'YYYY-MM-DD HH24:MI:SS.FF6')", value);
+            value = String.format("TO_TIMESTAMP_TZ(%s,'YYYY-MM-DD HH24:MI:SS.FF6 TZH:TZM')", value);
         }
 
         // 6 values, for timestamp(1) through timestamp(6)

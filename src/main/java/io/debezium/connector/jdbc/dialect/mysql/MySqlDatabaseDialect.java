@@ -77,7 +77,7 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
         registerType(TinyIntType.INSTANCE);
         registerType(YearType.INSTANCE);
         registerType(JsonType.INSTANCE);
-        registerType(ZonedTimestampWithoutTimezoneType.INSTANCE);
+        registerType(MySqlZonedTimestampType.INSTANCE);
         registerType(MapToJsonType.INSTANCE);
     }
 
