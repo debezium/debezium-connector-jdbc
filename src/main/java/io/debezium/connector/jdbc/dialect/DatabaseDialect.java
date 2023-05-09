@@ -7,11 +7,12 @@ package io.debezium.connector.jdbc.dialect;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.Set;
 
 import org.apache.kafka.connect.data.Schema;
 import org.hibernate.dialect.DatabaseVersion;
+import org.hibernate.dialect.TimeZoneSupport;
 import org.hibernate.engine.jdbc.Size;
 import org.hibernate.query.NativeQuery;
 
@@ -143,6 +144,9 @@ public interface DatabaseDialect {
      */
     int getMaxVarbinaryLength();
 
+    boolean isConnectionTimeZoneSet();
+    boolean isJdbcTimeZoneSet();
+
     /**
      * Gets the maximum precision allowed for a dialect's time data type.
      *
@@ -182,6 +186,10 @@ public interface DatabaseDialect {
      */
     boolean isNegativeScaleAllowed();
 
+    default String getTimeQueryBinding() {
+        return "?";
+    }
+
     /**
      * Returns the default format for binding a byte array
      * @return the format for binding a byte array
@@ -202,7 +210,7 @@ public interface DatabaseDialect {
      * @param value the value to tbe formatted, never {@code null}
      * @return the formatted string value
      */
-    String getFormattedDate(ZonedDateTime value);
+    String getFormattedDate(TemporalAccessor value);
 
     /**
      * Format a time.
@@ -210,7 +218,7 @@ public interface DatabaseDialect {
      * @param value the value to be formatted, never {@code null}
      * @return the formatted string value
      */
-    String getFormattedTime(ZonedDateTime value);
+    String getFormattedTime(TemporalAccessor value);
 
     /**
      * Format a time with time zone.
@@ -226,7 +234,7 @@ public interface DatabaseDialect {
      * @param value the value to be formatted, never {@code null}
      * @return the formatted string value
      */
-    String getFormattedDateTime(ZonedDateTime value);
+    String getFormattedDateTime(TemporalAccessor value);
 
     /**
      * Format a date and time with nonoseconds.
@@ -234,7 +242,7 @@ public interface DatabaseDialect {
      * @param value the value to be formatted, never {@code null}
      * @return the formatted string value
      */
-    String getFormattedDateTimeWithNanos(ZonedDateTime value);
+    String getFormattedDateTimeWithNanos(TemporalAccessor value);
 
     /**
      * Format a timestamp.
@@ -242,7 +250,7 @@ public interface DatabaseDialect {
      * @param value the value to be formatted, never {@code null}
      * @return the formatted string value
      */
-    String getFormattedTimestamp(ZonedDateTime value);
+    String getFormattedTimestamp(TemporalAccessor value);
 
     /**
      * Format a timestamp with time zone.
