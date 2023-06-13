@@ -82,6 +82,11 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
     }
 
     @Override
+    public String getAlterTableStatementFieldDelimiter() {
+        return ",";
+    }
+
+    @Override
     public int getMaxVarcharLengthInKey() {
         return 255;
     }
