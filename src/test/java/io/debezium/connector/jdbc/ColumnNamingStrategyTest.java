@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import io.debezium.connector.jdbc.naming.ColumnNamingStrategy;
 import io.debezium.connector.jdbc.naming.DefaultColumnNamingStrategy;
+import io.debezium.connector.jdbc.naming.UnicodeColumnNamingStrategy;
 
 /**
  * Tests for the {@link ColumnNamingStrategy} interface and implementations.
@@ -24,5 +25,11 @@ public class ColumnNamingStrategyTest {
     public void testDefaultColumnNamingStrategy() {
         final DefaultColumnNamingStrategy strategy = new DefaultColumnNamingStrategy();
         assertThat(strategy.resolveColumnName("field")).isEqualTo("field");
+    }
+
+    @Test
+    public void testUnicodeColumnNamingStrategy() {
+        final UnicodeColumnNamingStrategy strategy = new UnicodeColumnNamingStrategy();
+        assertThat(strategy.resolveColumnName("CAR_u0024BRAND")).isEqualTo("CAR$BRAND");
     }
 }
