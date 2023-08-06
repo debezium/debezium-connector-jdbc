@@ -141,7 +141,7 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
     @Override
     public String getFormattedTimestampWithTimeZone(String value) {
         final ZonedDateTime zonedDateTime = ZonedDateTime.parse(value, ZonedTimestamp.FORMATTER);
-        return String.format("'%s'", DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(zonedDateTime));
+        return String.format("'%s'", ISO_LOCAL_DATE_TIME_WITH_SPACE.format(zonedDateTime));
     }
 
     @Override
