@@ -167,4 +167,9 @@ public class Db2DatabaseDialect extends GeneralDatabaseDialect {
         }
         return columnName;
     }
+
+    @Override
+    public int getDefaultDecimalPrecision() {
+        return 31;
+    }
 }

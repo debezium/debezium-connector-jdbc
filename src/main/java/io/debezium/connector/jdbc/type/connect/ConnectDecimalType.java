@@ -35,7 +35,14 @@ public class ConnectDecimalType extends AbstractType {
 
     @Override
     public String getTypeName(DatabaseDialect dialect, Schema schema, boolean key) {
+
         int scale = Integer.parseInt(getSchemaParameter(schema, "scale").orElse("0"));
+        int precision = Integer.parseInt(getSchemaParameter(schema, "connect.decimal.precision").orElse("0"));
+
+        if (scale < 0) { // a negative scale means rounding, e.g. NUMBER(10, -2) would be rounded to hundreds
+            precision = precision - scale;
+        }
+
         if (scale < 0 && !dialect.isNegativeScaleAllowed()) {
             // Oracle submits negative scale values where the bound value will be rounded based on the scale.
             // This means when replicating to non-Oracle systems, negative scale values need to be omitted
@@ -44,7 +51,6 @@ public class ConnectDecimalType extends AbstractType {
             scale = 0;
         }
 
-        int precision = Integer.parseInt(getSchemaParameter(schema, "connect.decimal.precision").orElse("0"));
         if (precision > 0) {
             // Some dialects may have a smaller precision than what's provided by the source.
             // In such cases, we apply the dialect's upper-bounds.

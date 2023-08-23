@@ -189,4 +189,13 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
         super.addColumnDefaultValue(field, columnSpec);
     }
 
+    @Override
+    public int getDefaultDecimalPrecision() {
+        return 53;
+    }
+
+    @Override
+    public int getMaxScale() {
+        return 30;
+    }
 }

@@ -55,7 +55,7 @@ public class JdbcSinkPipelineToOracleIT extends AbstractJdbcSinkPipelineIT {
 
     @Override
     protected String getVariableScaleDecimalType() {
-        return "FLOAT";
+        return "NUMERIC";
     }
 
     @Override

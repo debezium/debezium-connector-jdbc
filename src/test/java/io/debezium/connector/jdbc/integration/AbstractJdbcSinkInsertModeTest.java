@@ -7,8 +7,16 @@ package io.debezium.connector.jdbc.integration;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.kafka.connect.data.Decimal;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.assertj.db.api.TableAssert;
 import org.assertj.db.type.ValueType;
@@ -23,6 +31,8 @@ import io.debezium.connector.jdbc.junit.TestHelper;
 import io.debezium.connector.jdbc.junit.jupiter.Sink;
 import io.debezium.connector.jdbc.junit.jupiter.SinkRecordFactoryArgumentsProvider;
 import io.debezium.connector.jdbc.util.SinkRecordFactory;
+import io.debezium.data.VariableScaleDecimal;
+import io.debezium.doc.FixFor;
 
 /**
  * Common insert mode tests.
@@ -295,7 +305,6 @@ public abstract class AbstractJdbcSinkInsertModeTest extends AbstractJdbcSinkTes
         getSink().assertColumnType(tableAssert, "__connect_offset", ValueType.NUMBER);
         getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER);
         getSink().assertColumnType(tableAssert, "name", ValueType.TEXT);
-        getSink().assertColumnType(tableAssert, "nick_name$", ValueType.TEXT);
     }
 
     @ParameterizedTest
@@ -347,5 +356,42 @@ public abstract class AbstractJdbcSinkInsertModeTest extends AbstractJdbcSinkTes
         getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER);
         getSink().assertColumnType(tableAssert, "name", ValueType.TEXT);
         getSink().assertColumnType(tableAssert, "nick_name$", ValueType.TEXT);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(SinkRecordFactoryArgumentsProvider.class)
+    @FixFor("DBZ-6637")
+    public void testInsertModeInsertWithPrimaryKeyModeNumericTypes(SinkRecordFactory factory) throws SQLException {
+
+        final Map<String, String> properties = getDefaultSinkConfig();
+        properties.put(JdbcSinkConnectorConfig.SCHEMA_EVOLUTION, SchemaEvolutionMode.BASIC.getValue());
+        properties.put(JdbcSinkConnectorConfig.PRIMARY_KEY_MODE, PrimaryKeyMode.RECORD_VALUE.getValue());
+        properties.put(JdbcSinkConnectorConfig.PRIMARY_KEY_FIELDS, "id");
+        properties.put(JdbcSinkConnectorConfig.INSERT_MODE, InsertMode.INSERT.getValue());
+
+        startSinkConnector(properties);
+        assertSinkConnectorIsRunning();
+
+        final String tableName = randomTableName();
+        final String topicName = topicName("server1", "schema", tableName);
+
+        SchemaBuilder decimalSchema = Decimal.builder(-1)
+                .parameter("connect.decimal.precision", String.valueOf(22));
+
+        Struct decimalValue = new Struct(VariableScaleDecimal.schema())
+                .put("scale", 25)
+                .put("value", Base64.getDecoder().decode("AQVuDzamRD3i33k=".getBytes()));
+
+        final SinkRecord createNumericRecord = factory.createRecordWithSchemaValue(topicName, (byte) 1,
+                List.of("val", "val1"), List.of(VariableScaleDecimal.schema(), decimalSchema), Arrays.asList(decimalValue, new BigDecimal("12345678901234567890123")));
+        consume(createNumericRecord);
+
+        final TableAssert tableAssert = TestHelper.assertTable(dataSource(), destinationTableName(createNumericRecord));
+        tableAssert.exists().hasNumberOfRows(1).hasNumberOfColumns(3);
+
+        getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER, (byte) 1);
+
+        getSink().assertColumnType(tableAssert, "val", BigDecimal.class, new BigDecimal("0.1234567890123456789012345"));
+        getSink().assertColumnType(tableAssert, "val1", BigDecimal.class, new BigDecimal("12345678901234567890123"));
     }
 }

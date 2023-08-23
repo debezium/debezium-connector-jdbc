@@ -164,6 +164,11 @@ public class OracleDatabaseDialect extends GeneralDatabaseDialect {
         return columnName;
     }
 
+    @Override
+    public int getMaxScale() {
+        return 127;
+    }
+
     private String getUpsertIncomingClause(String fieldName, TableDescriptor table, SinkRecordDescriptor record) {
         final String columnName = columnNameFromField(fieldName, record);
         return toIdentifier(table.getId()) + "." + columnName + "=INCOMING." + columnName;

@@ -63,7 +63,7 @@ public class JdbcSinkPipelineToMySqlIT extends AbstractJdbcSinkPipelineIT {
 
     @Override
     protected String getVariableScaleDecimalType() {
-        return "DOUBLE";
+        return "DECIMAL";
     }
 
     @Override
