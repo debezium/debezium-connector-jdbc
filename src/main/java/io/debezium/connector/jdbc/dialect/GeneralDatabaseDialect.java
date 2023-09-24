@@ -88,7 +88,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
 
     private final JdbcSinkConnectorConfig connectorConfig;
-    private final Dialect dialect;
+    protected final Dialect dialect;
     private final DdlTypeRegistry ddlTypeRegistry;
     private final IdentifierHelper identifierHelper;
     private final ColumnNamingStrategy columnNamingStrategy;
@@ -381,6 +381,11 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
     }
 
     @Override
+    public int getMaxScale() {
+        return dialect.getDefaultDecimalPrecision();
+    }
+
+    @Override
     public int getMaxVarcharLengthInKey() {
         return dialect.getMaxVarcharLength();
     }
@@ -457,6 +462,11 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
     @Override
     public int getDefaultTimestampPrecision() {
         return dialect.getDefaultTimestampPrecision();
+    }
+
+    @Override
+    public int getDoublePrecision() {
+        return dialect.getDoublePrecision();
     }
 
     @Override

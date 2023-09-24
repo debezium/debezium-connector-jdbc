@@ -220,6 +220,13 @@ public interface DatabaseDialect {
     int getDefaultTimestampPrecision();
 
     /**
+     * Get the default double data type precision for the dialect.
+     *
+     * @return default double precision
+     */
+    int getDoublePrecision();
+
+    /**
      * Returns whether the dialect permits negative scale.
      *
      * @return true if the dialect permits using negative scale values
@@ -335,4 +342,11 @@ public interface DatabaseDialect {
      * @return the next bind offset that should be used when binding multiple values
      */
     int bindValue(FieldDescriptor field, NativeQuery<?> query, int startIndex, Object value);
+
+    /**
+     * Get the max numeric/double data type scale for the dialect.
+     *
+     * @return max scale value
+     */
+    int getMaxScale();
 }

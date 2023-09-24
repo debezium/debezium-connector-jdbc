@@ -64,7 +64,7 @@ public class JdbcSinkPipelineToDb2IT extends AbstractJdbcSinkPipelineIT {
 
     @Override
     protected String getVariableScaleDecimalType() {
-        return "DOUBLE";
+        return "DECIMAL";
     }
 
     @Override

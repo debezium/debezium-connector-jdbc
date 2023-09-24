@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
+import org.hibernate.engine.jdbc.Size;
 import org.hibernate.query.Query;
 
 import io.debezium.connector.jdbc.dialect.DatabaseDialect;
@@ -36,8 +37,11 @@ public class VariableScaleDecimalType extends AbstractType {
     public String getTypeName(DatabaseDialect dialect, Schema schema, boolean key) {
         // The data passed by VariableScaleDecimal data types does not provide adequate information to
         // resolve the precision and scale for the data type, so instead we're going to default to the
-        // maximum double-based data types for the dialect, using DOUBLE.
-        return dialect.getTypeName(Types.DOUBLE);
+        // maximum for the dialect.
+        // TODO change this after https://issues.redhat.com/browse/DBZ-6836 is implemented
+        int precision = Math.min(dialect.getDoublePrecision(), dialect.getDefaultDecimalPrecision());
+        int scale = Math.min(dialect.getMaxScale(), precision);
+        return dialect.getTypeName(Types.NUMERIC, Size.precision(precision, scale));
     }
 
     @Override

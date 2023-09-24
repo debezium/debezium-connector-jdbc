@@ -206,4 +206,8 @@ public class PostgresDatabaseDialect extends GeneralDatabaseDialect {
         return super.resolveColumnName(field);
     }
 
+    @Override
+    public boolean isNegativeScaleAllowed() {
+        return dialect.getVersion().getMajor() >= 15;
+    }
 }

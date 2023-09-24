@@ -60,7 +60,7 @@ public class JdbcSinkPipelineToPostgresIT extends AbstractJdbcSinkPipelineIT {
 
     @Override
     protected String getVariableScaleDecimalType() {
-        return "FLOAT8";
+        return "NUMERIC";
     }
 
     @Override
