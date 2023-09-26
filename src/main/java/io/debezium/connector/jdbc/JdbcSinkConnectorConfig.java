@@ -299,7 +299,7 @@ public class JdbcSinkConnectorConfig {
          */
         UPDATE("update");
 
-        private String mode;
+        private final String mode;
 
         InsertMode(String mode) {
             this.mode = mode;
@@ -362,7 +362,7 @@ public class JdbcSinkConnectorConfig {
          */
         RECORD_HEADER("record_header");
 
-        private String mode;
+        private final String mode;
 
         PrimaryKeyMode(String mode) {
             this.mode = mode;
@@ -406,7 +406,7 @@ public class JdbcSinkConnectorConfig {
         // * schema not found in the event will be dropped.
         // */
         // ADVANCED("advanced");
-        private String mode;
+        private final String mode;
 
         SchemaEvolutionMode(String mode) {
             this.mode = mode;
