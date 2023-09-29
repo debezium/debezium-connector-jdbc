@@ -102,7 +102,7 @@ public interface DatabaseDialect {
      * @return the field delimeter for alter table SQL statement
      */
     default String getAlterTableStatementFieldDelimiter() {
-        return " ";
+        return ",";
     }
 
     /**
