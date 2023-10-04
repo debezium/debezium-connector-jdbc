@@ -112,11 +112,6 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
     }
 
     @Override
-    public String getAlterTableStatementFieldDelimiter() {
-        return ",";
-    }
-
-    @Override
     public int getMaxVarcharLengthInKey() {
         return 255;
     }
@@ -140,6 +135,11 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
     public String getFormattedTimestampWithTimeZone(String value) {
         final ZonedDateTime zonedDateTime = ZonedDateTime.parse(value, ZonedTimestamp.FORMATTER);
         return String.format("'%s'", DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(zonedDateTime));
+    }
+
+    @Override
+    public String getAlterTablePrefix() {
+        return "ADD COLUMN (";
     }
 
     @Override

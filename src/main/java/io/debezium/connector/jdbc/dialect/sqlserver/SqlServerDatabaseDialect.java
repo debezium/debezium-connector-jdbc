@@ -48,6 +48,16 @@ public class SqlServerDatabaseDialect extends GeneralDatabaseDialect {
     }
 
     @Override
+    public String getAlterTablePrefix() {
+        return "ADD ";
+    }
+
+    @Override
+    public String getAlterTableSuffix() {
+        return "";
+    }
+
+    @Override
     protected Optional<String> getDatabaseTimeZoneQuery() {
         return Optional.of("SELECT CURRENT_TIMEZONE()");
     }
