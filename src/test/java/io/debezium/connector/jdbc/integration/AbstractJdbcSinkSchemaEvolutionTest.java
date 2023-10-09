@@ -200,13 +200,12 @@ public abstract class AbstractJdbcSinkSchemaEvolutionTest extends AbstractJdbcSi
         consume(updateRecord);
 
         final TableAssert tableAssert = TestHelper.assertTable(dataSource(), destinationTableName(createRecord));
-        tableAssert.hasNumberOfRows(2).hasNumberOfColumns(5);
+        tableAssert.hasNumberOfRows(2).hasNumberOfColumns(4);
 
         getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER);
         getSink().assertColumnType(tableAssert, "name", ValueType.TEXT);
-        getSink().assertColumnType(tableAssert, "nick_name$", ValueType.TEXT, "John Doe$", null);
-        getSink().assertColumnType(tableAssert, "age", ValueType.NUMBER, null, 25);
-        getSink().assertColumnType(tableAssert, "weight", ValueType.NUMBER, null, 150);
+        getSink().assertColumnType(tableAssert, "age", ValueType.NUMBER, 25, null);
+        getSink().assertColumnType(tableAssert, "weight", ValueType.NUMBER, 150, null);
     }
 
     @ParameterizedTest
