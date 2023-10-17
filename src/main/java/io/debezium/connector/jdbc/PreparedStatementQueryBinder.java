@@ -17,10 +17,10 @@ public class PreparedStatementQueryBinder implements QueryBinder {
     }
 
     @Override
-    public void bind(int index, Object value) {
+    public void bind(ValueBindDescriptor valueBindDescriptor) {
 
         try {
-            binder.setObject(index, value);
+            binder.setObject(valueBindDescriptor.getIndex(), valueBindDescriptor.getValue());
         }
         catch (SQLException e) {
             throw new RuntimeException(e);

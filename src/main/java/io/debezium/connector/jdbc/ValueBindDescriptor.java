@@ -32,4 +32,7 @@ public class ValueBindDescriptor {
         return value;
     }
 
+    public Object getBindableType() {
+        return bindableType;
+    }
 }

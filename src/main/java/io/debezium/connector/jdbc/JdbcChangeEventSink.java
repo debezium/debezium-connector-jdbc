@@ -340,9 +340,9 @@ public class JdbcChangeEventSink implements ChangeEventSink {
     private int bindKeyValuesToQuery(SinkRecordDescriptor record, QueryBinder query, int index) {
 
         if (Objects.requireNonNull(config.getPrimaryKeyMode()) == JdbcSinkConnectorConfig.PrimaryKeyMode.KAFKA) {
-            query.bind(index++, record.getTopicName());
-            query.bind(index++, record.getPartition());
-            query.bind(index++, record.getOffset());
+            query.bind(new ValueBindDescriptor(index++, record.getTopicName()));
+            query.bind(new ValueBindDescriptor(index++, record.getPartition()));
+            query.bind(new ValueBindDescriptor(index++, record.getOffset()));
         }
         else {
             final Struct keySource = record.getKeyStruct(config.getPrimaryKeyMode());
@@ -362,7 +362,7 @@ public class JdbcChangeEventSink implements ChangeEventSink {
             final FieldDescriptor field = record.getFields().get(fieldName);
             List<ValueBindDescriptor> boundValues = dialect.bindValue(field, index, source.get(fieldName));
 
-            boundValues.forEach(boundValue -> query.bind(boundValue.getIndex(), boundValue.getValue()));
+            boundValues.forEach(query::bind);
             index += boundValues.size();
         }
         return index;

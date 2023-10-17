@@ -5,6 +5,7 @@
  */
 package io.debezium.connector.jdbc;
 
+import org.hibernate.query.BindableType;
 import org.hibernate.query.NativeQuery;
 
 public class NativeQueryBinder implements QueryBinder {
@@ -16,8 +17,13 @@ public class NativeQueryBinder implements QueryBinder {
     }
 
     @Override
-    public void bind(int index, Object value) {
+    public void bind(ValueBindDescriptor valueBindDescriptor) {
 
-        binder.setParameter(index, value);
+        if (valueBindDescriptor.getBindableType() != null) {
+            binder.setParameter(valueBindDescriptor.getIndex(), valueBindDescriptor.getValue(), (BindableType) valueBindDescriptor.getBindableType());
+        }
+        else {
+            binder.setParameter(valueBindDescriptor.getIndex(), valueBindDescriptor.getValue());
+        }
     }
 }

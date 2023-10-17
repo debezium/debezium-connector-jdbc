@@ -7,6 +7,6 @@ package io.debezium.connector.jdbc;
 
 public interface QueryBinder {
 
-    void bind(int index, Object value);
+    void bind(ValueBindDescriptor valueBindDescriptor);
 
 }
