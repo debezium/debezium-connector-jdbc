@@ -289,9 +289,9 @@ public class SinkRecordDescriptor {
             Objects.requireNonNull(primaryKeyMode, "The primary key mode must be provided.");
             Objects.requireNonNull(sinkRecord, "The sink record must be provided.");
 
-            final boolean flattened = !isTombstone(sinkRecord) && isFlattened(sinkRecord);
-            final boolean truncated = !flattened && isTruncateEvent(sinkRecord);
-            if (!truncated) {
+            boolean flattened = false;
+            if (!isTruncateEvent(sinkRecord)) {
+                flattened = !isTombstone(sinkRecord) && isFlattened(sinkRecord);
                 readSinkRecordKeyData(sinkRecord, flattened);
                 readSinkRecordNonKeyData(sinkRecord, flattened);
             }
@@ -309,8 +309,11 @@ public class SinkRecordDescriptor {
         }
 
         private boolean isTruncateEvent(SinkRecord record) {
-            return !isTombstone(record)
-                    && Operation.TRUNCATE.equals(Operation.forCode(((Struct) record.value()).getString(Envelope.FieldName.OPERATION)));
+            if (!isFlattened(record)) {
+                final Struct value = (Struct) record.value();
+                return Operation.TRUNCATE.equals(Operation.forCode(value.getString(Envelope.FieldName.OPERATION)));
+            }
+            return false;
         }
 
         private void readSinkRecordKeyData(SinkRecord record, boolean flattened) {

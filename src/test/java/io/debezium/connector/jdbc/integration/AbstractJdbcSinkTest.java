@@ -152,9 +152,7 @@ public abstract class AbstractJdbcSinkTest {
      * Consumes the provided {@link SinkRecord} by the JDBC sink connector task.
      */
     protected void consume(SinkRecord record) {
-        if (record != null) {
-            consume(Collections.singletonList(record));
-        }
+        consume(Collections.singletonList(record));
     }
 
     /**
