@@ -68,6 +68,8 @@ public class JdbcSinkConnectorConfig {
     public static final String BATCH_SIZE = "batch.size";
     public static final String FIELD_INCLUDE_LIST = "field.include.list";
     public static final String FIELD_EXCLUDE_LIST = "field.exclude.list";
+    public static final String FLUSH_MAX_RETRIES = "flush.max.retries";
+    public static final String FLUSH_RETRY_DELAY_MS = "flush.retry.delay.ms";
 
     // todo add support for the ValueConverter contract
 
@@ -278,6 +280,24 @@ public class JdbcSinkConnectorConfig {
             .withDescription("Specifies how many records to attempt to batch together into the destination table, when possible. " +
                     "You can also configure the connector’s underlying consumer’s max.poll.records using consumer.override.max.poll.records in the connector configuration.");
 
+    public static final Field FLUSH_MAX_RETRIES_FIELD = Field.create(FLUSH_MAX_RETRIES)
+            .withDisplayName("Max retry count")
+            .withType(Type.INT)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_ADVANCED, 5))
+            .withWidth(ConfigDef.Width.SHORT)
+            .withImportance(ConfigDef.Importance.LOW)
+            .withDefault(5)
+            .withDescription("Max retry count when fail to flush. retry if retriable exceptions");
+
+    public static final Field FLUSH_RETRY_DELAY_MS_FIELD = Field.create(FLUSH_RETRY_DELAY_MS)
+            .withDisplayName("Delay to retry flush")
+            .withType(Type.LONG)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_ADVANCED, 6))
+            .withWidth(ConfigDef.Width.SHORT)
+            .withImportance(ConfigDef.Importance.LOW)
+            .withDefault(1000L)
+            .withDescription("Delay to retry when fail to flush");
+
     public static final Field FIELD_INCLUDE_LIST_FIELD = Field.create(FIELD_INCLUDE_LIST)
             .withDisplayName("Include Fields")
             .withType(Type.LIST)
@@ -323,7 +343,9 @@ public class JdbcSinkConnectorConfig {
                     SQLSERVER_IDENTITY_INSERT_FIELD,
                     BATCH_SIZE_FIELD,
                     FIELD_INCLUDE_LIST_FIELD,
-                    FIELD_EXCLUDE_LIST_FIELD)
+                    FIELD_EXCLUDE_LIST_FIELD,
+                    FLUSH_MAX_RETRIES_FIELD,
+                    FLUSH_RETRY_DELAY_MS_FIELD)
             .create();
 
     /**
@@ -496,6 +518,8 @@ public class JdbcSinkConnectorConfig {
     private final String postgresPostgisSchema;
     private final boolean sqlServerIdentityInsert;
     private FieldNameFilter fieldsFilter;
+    private final int flushMaxRetries;
+    private final long flushRetryDelayMs;
 
     private final long batchSize;
 
@@ -520,6 +544,8 @@ public class JdbcSinkConnectorConfig {
         String fieldExcludeList = config.getString(FIELD_EXCLUDE_LIST);
         String fieldIncludeList = config.getString(FIELD_INCLUDE_LIST);
         this.fieldsFilter = FieldFilterFactory.createFieldFilter(fieldIncludeList, fieldExcludeList);
+        this.flushMaxRetries = config.getInteger(FLUSH_MAX_RETRIES_FIELD);
+        this.flushRetryDelayMs = config.getLong(FLUSH_RETRY_DELAY_MS_FIELD);
     }
 
     public void validate() {
@@ -611,6 +637,14 @@ public class JdbcSinkConnectorConfig {
 
     public String getPostgresPostgisSchema() {
         return postgresPostgisSchema;
+    }
+
+    public int getFlushMaxRetries() {
+        return flushMaxRetries;
+    }
+
+    public long getFlushRetryDelayMs() {
+        return flushRetryDelayMs;
     }
 
     /** makes {@link org.hibernate.cfg.Configuration} from connector config
