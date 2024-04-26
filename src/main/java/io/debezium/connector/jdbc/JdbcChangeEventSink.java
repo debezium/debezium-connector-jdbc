@@ -8,6 +8,7 @@ package io.debezium.connector.jdbc;
 import static io.debezium.connector.jdbc.JdbcSinkConnectorConfig.SchemaEvolutionMode.NONE;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +22,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.hibernate.StatelessSession;
 import org.hibernate.Transaction;
 import org.hibernate.dialect.DatabaseVersion;
-import org.hibernate.query.NativeQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -265,11 +265,17 @@ public class JdbcChangeEventSink implements ChangeEventSink {
     }
 
     private boolean hasTable(TableId tableId) {
-        return session.doReturningWork((connection) -> dialect.tableExists(connection, tableId));
+        return session.doReturningWork((connection) -> {
+            dialect.prepareConnection(connection);
+            return dialect.tableExists(connection, tableId);
+        });
     }
 
     private TableDescriptor readTable(TableId tableId) {
-        return session.doReturningWork((connection) -> dialect.readTable(connection, tableId));
+        return session.doReturningWork((connection) -> {
+            dialect.prepareConnection(connection);
+            return dialect.readTable(connection, tableId);
+        });
     }
 
     private TableDescriptor createTable(TableId tableId, SinkRecordDescriptor record) throws SQLException {
@@ -284,7 +290,7 @@ public class JdbcChangeEventSink implements ChangeEventSink {
         try {
             final String createSql = dialect.getCreateTableStatement(record, tableId);
             LOGGER.trace("SQL: {}", createSql);
-            session.createNativeQuery(createSql, Object.class).executeUpdate();
+            executeNativeQuery(createSql);
             transaction.commit();
         }
         catch (Exception e) {
@@ -333,7 +339,7 @@ public class JdbcChangeEventSink implements ChangeEventSink {
         try {
             final String alterSql = dialect.getAlterTableStatement(table, record, missingFields);
             LOGGER.trace("SQL: {}", alterSql);
-            session.createNativeQuery(alterSql, Object.class).executeUpdate();
+            executeNativeQuery(alterSql);
             transaction.commit();
         }
         catch (Exception e) {
@@ -371,14 +377,21 @@ public class JdbcChangeEventSink implements ChangeEventSink {
         final Transaction transaction = session.beginTransaction();
         try {
             LOGGER.trace("SQL: {}", sql);
-            final NativeQuery<?> query = session.createNativeQuery(sql, Object.class);
-
-            query.executeUpdate();
+            executeNativeQuery(sql);
             transaction.commit();
         }
         catch (Exception e) {
             transaction.rollback();
             throw e;
         }
+    }
+
+    private void executeNativeQuery(String sql) throws SQLException {
+        session.doWork(connection -> {
+            dialect.prepareConnection(connection);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(sql);
+            }
+        });
     }
 }

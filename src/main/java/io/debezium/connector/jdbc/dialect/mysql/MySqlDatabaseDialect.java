@@ -5,8 +5,10 @@
  */
 package io.debezium.connector.jdbc.dialect.mysql;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -19,6 +21,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.StatelessSession;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.MySQLDialect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.debezium.connector.jdbc.JdbcSinkConnectorConfig;
 import io.debezium.connector.jdbc.SinkRecordDescriptor;
@@ -36,6 +40,8 @@ import io.debezium.util.Strings;
  * @author Chris Cranford
  */
 public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MySqlDatabaseDialect.class);
 
     private static final List<String> NO_DEFAULT_VALUE_TYPES = Arrays.asList(
             "tinytext", "mediumtext", "longtext", "text", "tinyblob", "mediumblob", "longblob");
@@ -65,9 +71,15 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
     }
 
     private final boolean connectionTimeZoneSet;
+    private final String starRocksCatalogName;
 
     private MySqlDatabaseDialect(JdbcSinkConnectorConfig config, SessionFactory sessionFactory) {
         super(config, sessionFactory);
+
+        this.starRocksCatalogName = config.getStarRocksCatalogName();
+        if (!Strings.isNullOrBlank(this.starRocksCatalogName)) {
+            LOGGER.info("Using Starrocks default catalog: {}", this.starRocksCatalogName);
+        }
 
         try (StatelessSession session = sessionFactory.openStatelessSession()) {
             this.connectionTimeZoneSet = session.doReturningWork((connection) -> connection.getMetaData().getURL().contains("connectionTimeZone="));
@@ -189,5 +201,15 @@ public class MySqlDatabaseDialect extends GeneralDatabaseDialect {
             }
         }
         super.addColumnDefaultValue(field, columnSpec);
+    }
+
+    @Override
+    public void prepareConnection(Connection connection) throws SQLException {
+        if (!Strings.isNullOrBlank(starRocksCatalogName)) {
+            LOGGER.debug("Setting connection database as 'USE {}'", starRocksCatalogName);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(String.format("USE %s", starRocksCatalogName));
+            }
+        }
     }
 }
