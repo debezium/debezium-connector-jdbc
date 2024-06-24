@@ -10,6 +10,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -503,7 +504,21 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
 
     @Override
     public String getTypeName(int jdbcType) {
-        return ddlTypeRegistry.getTypeName(jdbcType, dialect);
+        // To remain consistent with Debezium 2.x releases, the behavior with how column types were
+        // resolved changed in Hibernate 6.3 to align more closely with JPA. This creates an issue
+        // for us as we were relying on Hibernate for column type resolution, and now column types
+        // are being resolved differently. This code aims to retain the Debezium 2.x resolution
+        // functionality.
+        switch (jdbcType) {
+            case Types.VARCHAR:
+                return getTypeName(Types.LONGVARCHAR);
+            case Types.NVARCHAR:
+                return getTypeName(Types.LONGNVARCHAR);
+            case Types.VARBINARY:
+                return getTypeName(Types.LONGVARBINARY);
+            default:
+                return ddlTypeRegistry.getTypeName(jdbcType, dialect);
+        }
     }
 
     @Override
