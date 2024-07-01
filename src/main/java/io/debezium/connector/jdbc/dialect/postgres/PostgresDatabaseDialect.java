@@ -5,6 +5,9 @@
  */
 package io.debezium.connector.jdbc.dialect.postgres;
 
+import static io.debezium.connector.jdbc.type.debezium.ZonedTimestampType.NEGATIVE_INFINITY;
+import static io.debezium.connector.jdbc.type.debezium.ZonedTimestampType.POSITIVE_INFINITY;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -165,6 +168,7 @@ public class PostgresDatabaseDialect extends GeneralDatabaseDialect {
         super.registerTypes();
 
         registerType(TimeWithTimezoneType.INSTANCE);
+        registerType(ZonedTimestampType.INSTANCE);
         registerType(IntervalType.INSTANCE);
         registerType(SerialType.INSTANCE);
         registerType(BitType.INSTANCE);
@@ -210,5 +214,15 @@ public class PostgresDatabaseDialect extends GeneralDatabaseDialect {
             }
         }
         return columnName;
+    }
+
+    @Override
+    public String getTimestampPositiveInfinityValue() {
+        return POSITIVE_INFINITY;
+    }
+
+    @Override
+    public String getTimestampNegativeInfinityValue() {
+        return NEGATIVE_INFINITY;
     }
 }

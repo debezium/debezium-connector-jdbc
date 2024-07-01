@@ -26,6 +26,8 @@ import io.debezium.time.ZonedTimestamp;
 public class ZonedTimestampType extends AbstractTimestampType {
 
     public static final ZonedTimestampType INSTANCE = new ZonedTimestampType();
+    public static final String POSITIVE_INFINITY = "infinity";
+    public static final String NEGATIVE_INFINITY = "-infinity";
 
     @Override
     public String[] getRegistrationKeys() {
@@ -45,13 +47,40 @@ public class ZonedTimestampType extends AbstractTimestampType {
         }
         if (value instanceof String) {
 
-            final ZonedDateTime zdt = ZonedDateTime.parse((String) value, ZonedTimestamp.FORMATTER).withZoneSameInstant(getDatabaseTimeZone().toZoneId());
+            if (POSITIVE_INFINITY.equals(value) || NEGATIVE_INFINITY.equals(value)) {
+                return infinityTimestampValue(index, value);
+            }
 
-            return List.of(new ValueBindDescriptor(index, zdt.toOffsetDateTime(), getJdbcType()));
+            return normalTimestampValue(index, value);
         }
 
         throw new ConnectException(String.format("Unexpected %s value '%s' with type '%s'", getClass().getSimpleName(),
                 value, value.getClass().getName()));
+    }
+
+    protected List<ValueBindDescriptor> infinityTimestampValue(int index, Object value) {
+        final ZonedDateTime zdt;
+
+        if (POSITIVE_INFINITY.equals(value)) {
+            zdt = ZonedDateTime.parse(getDialect().getTimestampPositiveInfinityValue(), ZonedTimestamp.FORMATTER);
+        }
+        else {
+            zdt = ZonedDateTime.parse(getDialect().getTimestampNegativeInfinityValue(), ZonedTimestamp.FORMATTER);
+        }
+
+        return List.of(new ValueBindDescriptor(index, zdt.toOffsetDateTime(), getJdbcBindType()));
+    }
+
+    protected List<ValueBindDescriptor> normalTimestampValue(int index, Object value) {
+
+        final ZonedDateTime zdt;
+        zdt = ZonedDateTime.parse((String) value, ZonedTimestamp.FORMATTER).withZoneSameInstant(getDatabaseTimeZone().toZoneId());
+
+        return List.of(new ValueBindDescriptor(index, zdt.toOffsetDateTime(), getJdbcBindType()));
+    }
+
+    protected int getJdbcBindType() {
+        return getJdbcType();
     }
 
     @Override

@@ -6,6 +6,7 @@
 package io.debezium.connector.jdbc.integration.postgres;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.postgresql.PGStatement;
 import org.postgresql.geometric.PGpoint;
 import org.postgresql.util.PGobject;
 
@@ -190,6 +192,46 @@ public class JdbcSinkInsertModeIT extends AbstractJdbcSinkInsertModeTest {
         getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER, (byte) 1, (byte) 2);
         getSink().assertColumnType(tableAssert, "name", ValueType.TEXT, "John Doe", "John Doe");
         getSink().assertColumnType(tableAssert, "nick_name$", ValueType.TEXT, "John Doe$", "John Doe$");
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(SinkRecordFactoryArgumentsProvider.class)
+    @FixFor("DBZ-7920")
+    public void testInsertModeInsertInfinityValues(SinkRecordFactory factory) throws SQLException {
+
+        final Map<String, String> properties = getDefaultSinkConfig();
+        properties.put(JdbcSinkConnectorConfig.SCHEMA_EVOLUTION, SchemaEvolutionMode.BASIC.getValue());
+        properties.put(JdbcSinkConnectorConfig.PRIMARY_KEY_MODE, PrimaryKeyMode.RECORD_VALUE.getValue());
+        properties.put(JdbcSinkConnectorConfig.PRIMARY_KEY_FIELDS, "id");
+        properties.put(JdbcSinkConnectorConfig.INSERT_MODE, InsertMode.INSERT.getValue());
+
+        startSinkConnector(properties);
+        assertSinkConnectorIsRunning();
+
+        final String tableName = randomTableName();
+        final String topicName = topicName("server1", "schema", tableName);
+
+        Schema zonedTimestampSchema = SchemaBuilder.string()
+                .name("io.debezium.time.ZonedTimestamp")
+                .build();
+
+        Schema rangeSchema = SchemaBuilder.string().build();
+
+        final SinkRecord createInfinityRecord = factory.createRecordWithSchemaValue(topicName, (byte) 1,
+                List.of("timestamp_infinity-", "timestamp_infinity+", "range_with_infinity"),
+                List.of(zonedTimestampSchema, zonedTimestampSchema, rangeSchema),
+                Arrays.asList(new Object[]{ "-infinity", "infinity", "[2010-01-01 14:30, infinity)" }));
+        consume(createInfinityRecord);
+
+        final TableAssert tableAssert = TestHelper.assertTable(dataSource(), destinationTableName(createInfinityRecord));
+        tableAssert.exists().hasNumberOfRows(1).hasNumberOfColumns(4);
+
+        getSink().assertColumnType(tableAssert, "id", ValueType.NUMBER, (byte) 1);
+
+        getSink().assertColumnType(tableAssert, "timestamp_infinity-", Timestamp.class, new Timestamp(PGStatement.DATE_NEGATIVE_INFINITY));
+        getSink().assertColumnType(tableAssert, "timestamp_infinity+", Timestamp.class, new Timestamp(PGStatement.DATE_POSITIVE_INFINITY));
+        getSink().assertColumnType(tableAssert, "range_with_infinity", String.class, "[2010-01-01 14:30, infinity)");
+
     }
 
     private static Schema buildGeoTypeSchema(String type) {

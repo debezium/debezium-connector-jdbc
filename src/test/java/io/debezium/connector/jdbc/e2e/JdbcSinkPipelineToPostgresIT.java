@@ -5,10 +5,18 @@
  */
 package io.debezium.connector.jdbc.e2e;
 
+import java.sql.ResultSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.debezium.connector.jdbc.junit.jupiter.PostgresSinkDatabaseContextProvider;
+import io.debezium.connector.jdbc.junit.jupiter.Sink;
+import io.debezium.connector.jdbc.junit.jupiter.e2e.ForSource;
+import io.debezium.connector.jdbc.junit.jupiter.e2e.WithTemporalPrecisionMode;
 import io.debezium.connector.jdbc.junit.jupiter.e2e.source.Source;
 import io.debezium.connector.jdbc.junit.jupiter.e2e.source.SourceType;
 
@@ -183,5 +191,29 @@ public class JdbcSinkPipelineToPostgresIT extends AbstractJdbcSinkPipelineIT {
     @Override
     protected String getIntervalType(Source source, boolean numeric) {
         return "INTERVAL";
+    }
+
+    @TestTemplate
+    @ForSource(value = { SourceType.POSTGRES }, reason = "The infinity value is valid only for PostgreSQL")
+    @WithTemporalPrecisionMode
+    @Override
+    public void testTimestampWithTimeZoneDataTypeWithInfinityValue(Source source, Sink sink) throws Exception {
+
+        final List<String> values = List.of("'-infinity'", "'infinity'");
+
+        List<String> expectedValues = values.stream()
+                .map(s -> s.replace("'", ""))
+                .collect(Collectors.toList());
+
+        assertDataTypesNonKeyOnly(source,
+                sink,
+                List.of("timestamptz", "timestamptz"),
+                values,
+                expectedValues,
+                (record) -> {
+                    assertColumn(sink, record, "data0", getTimestampWithTimezoneType(source, false, 6));
+                    assertColumn(sink, record, "data1", getTimestampWithTimezoneType(source, false, 6));
+                },
+                ResultSet::getString);
     }
 }
