@@ -62,6 +62,8 @@ public class RecordWriter {
     private Work processBatch(List<SinkRecordDescriptor> records, String sqlStatement) {
 
         return conn -> {
+            // Allow doing some prep work for certain dialects/databases
+            dialect.prepareConnection(conn);
 
             try (PreparedStatement prepareStatement = conn.prepareStatement(sqlStatement)) {
 
