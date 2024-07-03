@@ -23,12 +23,17 @@ import io.debezium.config.Configuration;
 import io.debezium.config.EnumeratedValue;
 import io.debezium.config.Field;
 import io.debezium.config.Field.ValidationOutput;
+import io.debezium.config.Instantiator;
 import io.debezium.connector.jdbc.filter.FieldFilterFactory;
 import io.debezium.connector.jdbc.filter.FieldFilterFactory.FieldNameFilter;
 import io.debezium.connector.jdbc.naming.ColumnNamingStrategy;
 import io.debezium.connector.jdbc.naming.DefaultColumnNamingStrategy;
 import io.debezium.connector.jdbc.naming.DefaultTableNamingStrategy;
+import io.debezium.connector.jdbc.naming.LowercaseColumnNamingStrategy;
+import io.debezium.connector.jdbc.naming.LowercaseTableNamingStrategy;
 import io.debezium.connector.jdbc.naming.TableNamingStrategy;
+import io.debezium.connector.jdbc.naming.UppercaseColumnNamingStrategy;
+import io.debezium.connector.jdbc.naming.UppercaseTableNamingStrategy;
 import io.debezium.util.Strings;
 
 /**
@@ -533,8 +538,8 @@ public class JdbcSinkConnectorConfig {
         this.schemaEvolutionMode = SchemaEvolutionMode.parse(config.getString(SCHEMA_EVOLUTION));
         this.quoteIdentifiers = config.getBoolean(QUOTE_IDENTIFIERS_FIELD);
         // this.dataTypeMapping = Strings.setOf(config.getString(DATA_TYPE_MAPPING_FIELD), String::new);
-        this.tableNamingStrategy = config.getInstance(TABLE_NAMING_STRATEGY_FIELD, TableNamingStrategy.class);
-        this.columnNamingStrategy = config.getInstance(COLUMN_NAMING_STRATEGY_FIELD, ColumnNamingStrategy.class);
+        this.tableNamingStrategy = resolveTableNamingStrategy(config);
+        this.columnNamingStrategy = resolveColumnNamingStrategy(config);
         this.databaseTimezone = config.getString(DATABASE_TIME_ZONE_FIELD);
         this.postgresPostgisSchema = config.getString(POSTGRES_POSTGIS_SCHEMA_FIELD);
         this.sqlServerIdentityInsert = config.getBoolean(SQLSERVER_IDENTITY_INSERT_FIELD);
@@ -710,5 +715,31 @@ public class JdbcSinkConnectorConfig {
             }
         }
         return 0;
+    }
+
+    private static ColumnNamingStrategy resolveColumnNamingStrategy(Configuration config) {
+        final String className = config.getString(COLUMN_NAMING_STRATEGY_FIELD);
+        if (!Strings.isNullOrEmpty(className)) {
+            if (className.equalsIgnoreCase("lowercase")) {
+                return Instantiator.getInstance(LowercaseColumnNamingStrategy.class.getName());
+            }
+            else if (className.equalsIgnoreCase("uppercase")) {
+                return Instantiator.getInstance(UppercaseColumnNamingStrategy.class.getName());
+            }
+        }
+        return config.getInstance(COLUMN_NAMING_STRATEGY_FIELD, ColumnNamingStrategy.class);
+    }
+
+    private static TableNamingStrategy resolveTableNamingStrategy(Configuration config) {
+        final String className = config.getString(TABLE_NAMING_STRATEGY_FIELD);
+        if (!Strings.isNullOrEmpty(className)) {
+            if (className.equalsIgnoreCase("lowercase")) {
+                return Instantiator.getInstance(LowercaseTableNamingStrategy.class.getName());
+            }
+            else if (className.equalsIgnoreCase("uppercase")) {
+                return Instantiator.getInstance(UppercaseTableNamingStrategy.class.getName());
+            }
+        }
+        return config.getInstance(TABLE_NAMING_STRATEGY_FIELD, TableNamingStrategy.class);
     }
 }
