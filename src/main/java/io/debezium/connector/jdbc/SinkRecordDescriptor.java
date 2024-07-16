@@ -196,7 +196,8 @@ public class SinkRecordDescriptor {
             this.typeName = type.getTypeName(dialect, schema, key);
 
             this.name = name;
-            this.columnName = SchemaUtils.getSourceColumnName(schema).orElse(name);
+            // Avoid avro schema reuse of Geometry record structure to get same column name
+            this.columnName = isStructType() ? name : SchemaUtils.getSourceColumnName(schema).orElse(name);
 
             LOGGER.trace("Field [{}] with schema [{}]", this.name, schema.type());
             LOGGER.trace("    Type      : {}", type.getClass().getName());
@@ -245,6 +246,10 @@ public class SinkRecordDescriptor {
 
         public List<ValueBindDescriptor> bind(int startIndex, Object value) {
             return type.bind(startIndex, schema, value);
+        }
+
+        public boolean isStructType() {
+            return schema.type() == Schema.Type.STRUCT;
         }
 
         @Override
