@@ -593,6 +593,7 @@ public class GeneralDatabaseDialect implements DatabaseDialect {
         if (query.isPresent()) {
             try (StatelessSession session = sessionFactory.openStatelessSession()) {
                 return session.doReturningWork((connection) -> {
+                    prepareConnection(connection);
                     try (Statement st = connection.createStatement()) {
                         try (ResultSet rs = st.executeQuery(query.get())) {
                             if (rs.next()) {

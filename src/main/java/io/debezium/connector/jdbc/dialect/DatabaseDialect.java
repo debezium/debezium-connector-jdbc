@@ -383,4 +383,12 @@ public interface DatabaseDialect {
      * @return the list of bounded values
      */
     List<ValueBindDescriptor> bindValue(FieldDescriptor field, int startIndex, Object value);
+
+    /**
+     * Prepares the connection for use
+     *
+     * @param connection the connection, should never be {@code null}
+     */
+    default void prepareConnection(Connection connection) throws SQLException {
+    }
 }

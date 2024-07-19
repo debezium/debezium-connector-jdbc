@@ -66,6 +66,7 @@ public class JdbcSinkConnectorConfig {
     public static final String DATABASE_TIME_ZONE = "database.time_zone";
     public static final String POSTGRES_POSTGIS_SCHEMA = "dialect.postgres.postgis.schema";
     public static final String SQLSERVER_IDENTITY_INSERT = "dialect.sqlserver.identity.insert";
+    public static final String STARROCKS_CATALOG_NAME = "dialect.starrocks.catalog_name";
     public static final String BATCH_SIZE = "batch.size";
     public static final String FIELD_INCLUDE_LIST = "field.include.list";
     public static final String FIELD_EXCLUDE_LIST = "field.exclude.list";
@@ -278,6 +279,14 @@ public class JdbcSinkConnectorConfig {
             .withDefault(false)
             .withDescription("Allowing to insert explicit value for identity column in table for SQLSERVER.");
 
+    public static final Field STARROCKS_CATALOG_NAME_FIELD = Field.create(STARROCKS_CATALOG_NAME)
+            .withDisplayName("Specifies the catalog name to use when connecting to StarRocks")
+            .withType(Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_ADVANCED, 4))
+            .withWidth(ConfigDef.Width.SHORT)
+            .withImportance(ConfigDef.Importance.LOW)
+            .withDescription("The default catalog to use when connecting to StarRocks");
+
     public static final Field BATCH_SIZE_FIELD = Field.create(BATCH_SIZE)
             .withDisplayName("Specifies how many records to attempt to batch together into the destination table, when possible. " +
                     "You can also configure the connector’s underlying consumer’s max.poll.records using consumer.override.max.poll.records in the connector configuration.")
@@ -342,6 +351,7 @@ public class JdbcSinkConnectorConfig {
                     DATABASE_TIME_ZONE_FIELD,
                     POSTGRES_POSTGIS_SCHEMA_FIELD,
                     SQLSERVER_IDENTITY_INSERT_FIELD,
+                    STARROCKS_CATALOG_NAME_FIELD,
                     BATCH_SIZE_FIELD,
                     FIELD_INCLUDE_LIST_FIELD,
                     FIELD_EXCLUDE_LIST_FIELD)
@@ -516,6 +526,7 @@ public class JdbcSinkConnectorConfig {
     private final String databaseTimezone;
     private final String postgresPostgisSchema;
     private final boolean sqlServerIdentityInsert;
+    private final String starRocksCatalogName;
     private FieldNameFilter fieldsFilter;
 
     private final long batchSize;
@@ -538,6 +549,7 @@ public class JdbcSinkConnectorConfig {
         this.databaseTimezone = config.getString(DATABASE_TIME_ZONE_FIELD);
         this.postgresPostgisSchema = config.getString(POSTGRES_POSTGIS_SCHEMA_FIELD);
         this.sqlServerIdentityInsert = config.getBoolean(SQLSERVER_IDENTITY_INSERT_FIELD);
+        this.starRocksCatalogName = config.getString(STARROCKS_CATALOG_NAME_FIELD);
         this.batchSize = config.getLong(BATCH_SIZE_FIELD);
         this.useReductionBuffer = config.getBoolean(USE_REDUCTION_BUFFER_FIELD);
 
@@ -639,6 +651,10 @@ public class JdbcSinkConnectorConfig {
 
     public String getPostgresPostgisSchema() {
         return postgresPostgisSchema;
+    }
+
+    public String getStarRocksCatalogName() {
+        return starRocksCatalogName;
     }
 
     /** makes {@link org.hibernate.cfg.Configuration} from connector config
